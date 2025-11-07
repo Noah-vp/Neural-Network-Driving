@@ -1,7 +1,7 @@
 walls = [];
 avoids = [];
 raypos = [0,0];
-raylen = [0,0,0,0]
+raylen = [0,0,0]
 var showraycasting = true;
 var moveL = false;
 var moveR = false;
@@ -18,10 +18,18 @@ var time4= 0;
 var time5= 0;
 var besttime = 0;
 var bestbrain;
+var hudDecision = 0;
+var renderOffsetX = 0;
+var renderOffsetY = 0;
 
 
 function setup() {
-    createCanvas(900, 700);
+    var host = document.getElementById('canvas-host');
+    var c = createCanvas(900, 700);
+    if(host){ c.parent('canvas-host'); }
+    // center rendering of the 400x400 grid (bounds 100..500) in the canvas
+    renderOffsetX = (width/2) - ((100 + 500) / 2);
+    renderOffsetY = (height/2) - ((100 + 500) / 2);
     walls.push(new Boundary(100, 100, 500, 100))
     walls.push(new Boundary(500, 100, 500, 500))
     walls.push(new Boundary(500, 500 ,100, 500))
@@ -48,11 +56,11 @@ function setup() {
         car.addImage('fout', image2);
         car.addAnimation('goed', image)
     
-    brain =  new NeuralNetwork(4,4,1)
-    brain2 = new NeuralNetwork(4,4,1)
-    brain3 = new NeuralNetwork(4,4,1)
-    brain4 = new NeuralNetwork(4,4,1)
-    brain5 = new NeuralNetwork(4,4,1)
+    brain =  new NeuralNetwork(3,4,1)
+    brain2 = new NeuralNetwork(3,4,1)
+    brain3 = new NeuralNetwork(3,4,1)
+    brain4 = new NeuralNetwork(3,4,1)
+    brain5 = new NeuralNetwork(3,4,1)
 
 
     checkpoints = new Group();
@@ -90,12 +98,13 @@ function setup() {
 
   function draw(){
     //console.log(time1, time2,time3,time4,time5);
-    background(200);
+    background(11,15,23);
+    push();
+    translate(renderOffsetX, renderOffsetY);
     drawSprites();
     movement();
-    text (besttime, 150 ,50,50,50)
-    text (keer , 50,50,50,50)
-    text (roundd , 100,50,50,50)
+    // Update HUD
+    updateHud();
     for (let wall of walls){
         wall.show();
     }
@@ -109,9 +118,14 @@ function setup() {
     for (i = 0;i <= rayamount;  i ++){
      let new_a = a + 360/rayamount;
      a = new_a;
+     let ar = ((a % 360) + 360) % 360;
+     let deg = Math.round(ar);
+     // use only forward arc: keep <90° and >270°
+     if (deg > 90 && deg < 270) { continue; }
      raycasting(a);
     }
     ga();
+    pop();
   }
   function time(){
     if (keer == 1){
@@ -149,6 +163,25 @@ function setup() {
             setTimeout(1000)
         }
     }
+  }
+  function updateHud(){
+    var gEl = document.getElementById('hud-gen');
+    var cEl = document.getElementById('hud-car');
+    var sEl = document.getElementById('hud-score');
+    var dEl = document.getElementById('hud-decision');
+    if(gEl){ gEl.textContent = roundd; }
+    if(cEl){ cEl.textContent = keer + '/5'; }
+    if(sEl){ sEl.textContent = getCurrentScore() + '/' + besttime; }
+    if(dEl){ dEl.textContent = hudDecision + '/10'; }
+  }
+
+  function getCurrentScore(){
+    if (keer == 1) return time1;
+    if (keer == 2) return time2;
+    if (keer == 3) return time3;
+    if (keer == 4) return time4;
+    if (keer == 5) return time5;
+    return 0;
   }
   function collision(m){
       if (car.position.x > m.a.x && car.position.x < m.b.x){
@@ -237,17 +270,16 @@ function setup() {
         closest = lengte;
             raypos[0] = pt.x;
             raypos[1] = pt.y;
-            if (r == 0 || r == 360){
-                raylen[0] = lengte;
-            }
-            if (r == 90){
-                raylen[1] = lengte;
-            }
-            if (r == 180){
-                raylen[2] = lengte;
-            }
-            if (r == 270){
-                raylen[3] = lengte;
+            // map front-left, front, front-right to 3 inputs
+            var rel = ((r % 360) + 360) % 360;
+            if (rel < 90 || rel > 270){
+                if (rel < 45 || rel > 315){
+                  raylen[1] = lengte; // front
+                } else if (rel <= 90){
+                  raylen[2] = lengte; // front-right
+                } else if (rel >= 270){
+                  raylen[0] = lengte; // front-left
+                }
             }
     }}}
   function ga(){
@@ -274,8 +306,8 @@ function setup() {
                 if (output < 0.45){
                     moveR = 1;
                 }
-                text (Math.round(output * 10), 200 ,50,50,50)
-                console.log(output)
+                // decision score is 0..10
+                hudDecision = Math.round(output * 10);
   }
   function mutatee(x) {
     if (random(1) < 0.1) {

@@ -5,10 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <script src="https://cdn.jsdelivr.net/npm/p5@1.1.4/lib/p5.min.js"></script>
-    
+    <link rel="stylesheet" href="styles.css" />
     <title>AI learns to dirve</title>
   </head>
   <body id="body">
+    <header class="app-header">
+      <div class="container header-row">
+        <a class="btn back-link" href="https://www.noahvp.dev">← Back to portfolio</a>
+        <div>
+          <h1>AI Learns to Drive</h1>
+          <p class="subtitle">Neuroevolution driving through a maze with ray sensors.</p>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h2>What’s happening?</h2>
+        <ul>
+          <li>The car casts rays to sense distances to walls.</li>
+          <li>A tiny neural network outputs left/right steering decisions.</li>
+          <li>Five variants race; the best performer gets mutated to form the next generation.</li>
+        </ul>
+      </section>
+
+      <div class="hud">
+        <div class="chip"><strong>Gen:</strong> <span id="hud-gen">1</span></div>
+        <div class="chip"><strong>Car:</strong> <span id="hud-car">1/5</span></div>
+        <div class="chip"><strong>Score:</strong> <span id="hud-score">0</span></div>
+        <div class="chip"><strong>Decision:</strong> <span id="hud-decision">0/10</span></div>
+      </div>
+
+      <div class="map-frame">
+        <main id="canvas-host"></main>
+      </div>
+    </main>
+
     <script src="main.js"></script>
     <script src="boundary.js"></script> 
     <script src="nn.js"></script>
